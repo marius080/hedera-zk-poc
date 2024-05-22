@@ -868,6 +868,7 @@ dependencies = [
  "alloy-sol-types",
  "bls-signatures",
  "risc0-zkvm",
+ "serde",
  "sha2 0.10.8",
 ]
 

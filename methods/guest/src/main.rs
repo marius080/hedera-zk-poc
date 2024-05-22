@@ -16,7 +16,7 @@ sol! {
 }
 
 use risc0_zkvm::guest::env;
-use risc0_zkvm::serde::Deserialize;
+use serde::Deserialize;
 
 // Function to verify a Merkle proof
 fn compute_merkle_root(leaf: FixedBytes<48>, merkle_path: [[u8; 48]; 256]) -> [u8; 48] {

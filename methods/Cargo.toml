@@ -18,3 +18,4 @@ alloy-sol-types = { workspace = true }
 risc0-zkvm = { workspace = true, features = ["client"] }
 bls-signatures = "0.15.0"
 sha2 = "0.10"
+serde = { version = "1.0", features = ["derive"] }
