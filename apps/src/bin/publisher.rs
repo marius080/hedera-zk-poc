@@ -21,7 +21,7 @@ use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use apps::{BonsaiProver, TxSender};
 use clap::Parser;
-use methods::IS_EVEN_ELF;
+use methods::MAIN_ELF;
 
 // `IEvenNumber` interface automatically generated via the alloy `sol!` macro.
 sol! {
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
 
     // Request proof from the Bonsai proving service: The application sends the encoded input to the
     // Bonsai proving service, requesting it to execute the is_even computation off-chain and generate the necessary proof.
-    let (journal, post_state_digest, seal) = BonsaiProver::prove(IS_EVEN_ELF, &input)?;
+    let (journal, post_state_digest, seal) = BonsaiProver::prove(MAIN_ELF, &input)?;
 
     // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
     // the verified number. This ensures that the number being submitted to the blockchain matches
