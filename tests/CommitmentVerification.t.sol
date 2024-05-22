@@ -52,6 +52,8 @@ contract CommitmentVerificationTest is RiscZeroCheats, Test {
         //48 bytes sha384 of b"example leaf data"
         bytes memory merkleRoot = hex"efc563da3547fa6c34324df1af95c06e204306ffe614b5dd0164f72924f21bf62e253194a7483435c05c5378f32a768a";
 
+        bytes memory input = bytes.concat(merkleRoot, leaf, blsPubKey, blsSignature);
+
         bytes[] memory merklePath = new bytes[](256);
         for (uint256 i = 0; i < 256; i++) {
             bytes memory element = new bytes(48);
@@ -59,11 +61,14 @@ contract CommitmentVerificationTest is RiscZeroCheats, Test {
                 mstore(add(add(element, 32), 0), i) // Store index value at the beginning of the bytes element
             }
             merklePath[i] = element;
+            input = bytes.concat(input, merklePath[i]);
 
             //console2.logBytes(merklePath[i]);
         }
 
-        (bytes memory journal, bytes32 post_state_digest, bytes memory seal) = prove(Elf.MAIN_PATH, abi.encode(merkleRoot, leaf, blsPubKey, blsSignature, merklePath));
+
+        //(bytes memory journal, bytes32 post_state_digest, bytes memory seal) = prove(Elf.MAIN_PATH, abi.encodePacked(merkleRoot, leaf, blsPubKey, blsSignature, merklePath));
+        (bytes memory journal, bytes32 post_state_digest, bytes memory seal) = prove(Elf.MAIN_PATH, input);
 
         (bytes memory computedMerkleRoot, bytes memory computedLeaf, bytes memory computedPubkey, bytes memory computedSignature) = abi.decode(journal, (bytes, bytes, bytes, bytes));
 
