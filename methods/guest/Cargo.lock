@@ -16,28 +16,6 @@ dependencies = [
 
 [[package]]
 name = "alloy-primitives"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef197eb250c64962003cb08b90b17f0882c192f4a6f2f544809d424fd7cb0e7d"
-dependencies = [
- "alloy-rlp",
- "bytes",
- "cfg-if",
- "const-hex",
- "derive_more",
- "hex-literal",
- "itoa",
- "k256",
- "keccak-asm",
- "proptest",
- "rand",
- "ruint",
- "serde",
- "tiny-keccak",
-]
-
-[[package]]
-name = "alloy-primitives"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db8aa973e647ec336810a9356af8aea787249c9d00b1525359f3db29a68d231b"
@@ -121,7 +99,7 @@ version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40a64d2d2395c1ac636b62419a7b17ec39031d6b2367e66e9acbf566e6055e9c"
 dependencies = [
- "alloy-primitives 0.7.4",
+ "alloy-primitives",
  "alloy-sol-macro",
  "const-hex",
  "serde",
@@ -864,7 +842,7 @@ dependencies = [
 name = "guests"
 version = "0.1.0"
 dependencies = [
- "alloy-primitives 0.6.3",
+ "alloy-primitives",
  "alloy-sol-types",
  "bls-signatures",
  "risc0-zkvm",
@@ -999,7 +977,6 @@ dependencies = [
  "elliptic-curve",
  "once_cell",
  "sha2 0.10.8",
- "signature",
 ]
 
 [[package]]

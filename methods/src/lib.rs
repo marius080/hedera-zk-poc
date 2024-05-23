@@ -5,7 +5,12 @@ mod tests {
     use alloy_primitives::FixedBytes;
     //use bls_signatures::{PublicKey, PrivateKey, Signature, Serialize};
 
-    use risc0_zkvm::{default_executor, ExecutorEnv};
+    //use risc0_zkvm::{default_executor, ExecutorEnv, default_prover};
+    use risc0_groth16::docker::stark_to_snark;
+    use risc0_zkvm::{
+        get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl,
+        InnerReceipt, ProverOpts, Receipt, VerifierContext,
+    };
     use std::str::FromStr;
     
     use sha2::{Sha384, Digest};
@@ -93,17 +98,43 @@ mod tests {
         let bls_signature = FixedBytes::<96>::from_str("af08d283cbf25c4863294e49d08080b6bb9861e92d7ccc16434c4d355bf3c22f7858e7cb63fc3461d3250ce250822f9a1274952d7282c1f585a48b2572497c727beaf295ba817c5c112d5a4603c0fe864caeadab040c9ad5db47441ac8aef259").unwrap();
         
         let private_inputs = PrivateInputs::new(merkle_root, leaf, bls_pubkey, bls_signature, serialized_path);
-        println!("{:?}", private_inputs);
+        //println!("{:?}", private_inputs);
     
-
         let env = ExecutorEnv::builder()
             .write(&private_inputs).unwrap()
             .build().unwrap();
 
         // NOTE: Use the executor to run tests without proving.
-        let session_info = default_executor().execute(env, super::MAIN_ELF).unwrap();
-
-        // Call the verification function
-        // verify_commitment(tx_hash, l1_block_number, signed_commitment, sequencer_pubkey, sequencing_data);
+        // let session_info = default_executor().execute(env, super::MAIN_ELF).unwrap();
+        println!("Executing");
+        let mut exec = ExecutorImpl::from_elf(env, super::MAIN_ELF).unwrap();
+        let session = exec.run().unwrap();
+    
+        println!("prove");
+        let opts = ProverOpts::default();
+        let ctx = VerifierContext::default();
+        let prover = get_prover_server(&opts).unwrap();
+        // let receipt = prover.prove_session(&ctx, &session).unwrap().receipt;
+        // available fields are: `inner`, `journal`
+        let receipt: Receipt = prover.prove_session(&ctx, &session).unwrap();
+        let claim = receipt.get_claim().unwrap();
+        let composite_receipt = receipt.inner.composite().unwrap();
+        let succinct_receipt = prover.compress(composite_receipt).unwrap();
+        let journal = session.journal.unwrap().bytes;
+    
+        println!("identity_p254");
+        let ident_receipt = identity_p254(&succinct_receipt).unwrap();
+        let seal_bytes = ident_receipt.get_seal_bytes();
+    
+        println!("stark-to-snark");
+        let seal = stark_to_snark(&seal_bytes).unwrap().to_vec();
+    
+        println!("receipt");
+        let receipt = Receipt::new(
+            InnerReceipt::Compact(CompactReceipt { seal, claim }),
+            journal,
+        );
+    
+        // receipt.verify(super::MAIN_ELF).unwrap();
     }
 }

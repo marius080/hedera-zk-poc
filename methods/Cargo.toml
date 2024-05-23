@@ -15,7 +15,9 @@ risc0-zkp = { workspace = true }
 [dev-dependencies]
 alloy-primitives = { workspace = true }
 alloy-sol-types = { workspace = true }
-risc0-zkvm = { workspace = true, features = ["client"] }
 bls-signatures = "0.15.0"
 sha2 = "0.10"
 serde = { version = "1.0", features = ["derive"] }
+
+risc0-zkvm = { workspace = true, features = ["client", "prove"] }
+risc0-groth16 = "0.21.0"

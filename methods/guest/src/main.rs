@@ -55,10 +55,6 @@ fn main() {
     let start = env::cycle_count();
 
     let private_inputs = env::read::<PrivateInputs>();
-    // let leaf: FixedBytes<48>= env::read();
-    // let bls_pubkey: FixedBytes<48> = env::read(); // BLS public key size will always be 48 bytes
-    // let bls_signature: FixedBytes<96> = env::read(); // BLS public key size will always be 96 bytes
-    // let serialized_path: FixedBytes<12288> = env::read(); // 48 * 256 length
 
     let merkle_path: [[u8; 48]; 256] = private_inputs.serialized_path.chunks_exact(48).map(|chunk| {
         let mut arr = [0u8; 48];
@@ -68,12 +64,6 @@ fn main() {
 
 
     println!("private inputs: {:?}", private_inputs);
-
-    // println!("merkle_root: {:?}", merkle_root);
-    // println!("leaf: {:?}", leaf);
-    // println!("bls_pubkey: {:?}", bls_pubkey);
-    // println!("bls_signature: {:?}", bls_signature);
-    // println!("merkle_path: {:?}", merkle_path);
 
     let computed_root: [u8; 48] = compute_merkle_root(private_inputs.leaf, merkle_path);
     
@@ -101,6 +91,6 @@ fn main() {
     env::commit_slice(&(public_inputs.abi_encode()));
 
     let end = env::cycle_count();
-    eprintln!("my_operation_to_measure: {}", end - start);
+    eprintln!("total cycle count: {}", end - start);
 
 }
