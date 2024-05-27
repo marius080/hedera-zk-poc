@@ -21,3 +21,4 @@ serde = { version = "1.0", features = ["derive"] }
 
 risc0-zkvm = { workspace = true, features = ["client", "prove"] }
 risc0-groth16 = "0.21.0"
+tracing = "0.1"

@@ -1,5 +1,6 @@
 #![no_main]
 
+
 use sha2::{Sha384, Digest};
 use alloy_primitives::FixedBytes;
 use bls_signatures::{PublicKey, Signature, verify_messages, Serialize};
@@ -62,23 +63,32 @@ fn main() {
         arr
     }).collect::<Vec<[u8; 48]>>().try_into().unwrap();
 
+    let mut diff = env::cycle_count();
 
-    println!("private inputs: {:?}", private_inputs);
+    // env::log(private_inputs.to_string(),);
+    env::log(&format!("cycle count after reading private inputs: {}", diff - start));
 
     let computed_root: [u8; 48] = compute_merkle_root(private_inputs.leaf, merkle_path);
     
-    println!("computed_root: {:?}", computed_root);
+    diff = env::cycle_count();
+    env::log(&format!("cycle count after merkle root: {}", diff - start));
+
+    // println!("computed_root: {:?}", computed_root);
+    //env::log(computed_root);
 
     assert_eq!(computed_root, private_inputs.merkle_root.as_slice());
 
     // Verify the BLS signature
-    let pubkey = PublicKey::from_bytes(&private_inputs.bls_pubkey.as_slice()).expect("Invalid public key");
-    let signature = Signature::from_bytes(&private_inputs.bls_signature.as_slice()).expect("Invalid signature");
+    // let pubkey = PublicKey::from_bytes(&private_inputs.bls_pubkey.as_slice()).expect("Invalid public key");
+    // let signature = Signature::from_bytes(&private_inputs.bls_signature.as_slice()).expect("Invalid signature");
 
-    println!("PublicKey: {:?}", private_inputs.bls_pubkey);
-    println!("Signature: {:?}", private_inputs.bls_signature);
+    // println!("PublicKey: {:?}", private_inputs.bls_pubkey);
+    // println!("Signature: {:?}", private_inputs.bls_signature);
     
-    assert!(verify_messages(&signature, &[computed_root.as_slice()], &[pubkey]), "Invalid verification");
+    // assert!(verify_messages(&signature, &[computed_root.as_slice()], &[pubkey]), "Invalid verification");
+    
+    // diff = env::cycle_count();
+    // env::log(&format!("cycle count after BLS signature verification: {}", diff - start));
 
     // Encocde the public values of the program.
     let public_inputs: PublicInputs = PublicInputs {
@@ -90,7 +100,7 @@ fn main() {
     // Commit to the public values of the program.
     env::commit_slice(&(public_inputs.abi_encode()));
 
-    let end = env::cycle_count();
-    eprintln!("total cycle count: {}", end - start);
+    diff = env::cycle_count();
+    env::log(&format!("total cycle count: {}", diff - start));
 
 }

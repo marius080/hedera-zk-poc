@@ -14,8 +14,12 @@ alloy-primitives = { version = "0.7.4", default-features = false, features = ["r
 alloy-sol-types = "0.7.4"
 risc0-zkvm = {  version = "0.21", default-features = false, features = ['std'] }
 bls-signatures = "0.15.0"
-sha2 = "0.10"
 serde = { version = "1.0", features = ["derive"] }
+
+[dependencies.sha2]
+git = "https://github.com/risc0/RustCrypto-hashes"
+tag = "sha2-v0.10.6-risczero.0"
+
 
 [profile.release]
 lto = "thin"
