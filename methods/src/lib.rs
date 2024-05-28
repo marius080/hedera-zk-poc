@@ -8,11 +8,13 @@ mod tests {
     use risc0_groth16::docker::stark_to_snark;
     use risc0_zkvm::{
         get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl,
-        InnerReceipt, ProverOpts, Receipt, VerifierContext
+        InnerReceipt, ProverOpts, Receipt, VerifierContext, ProverServer
     };
     use std::str::FromStr;
 
     use sha2::{Digest, Sha384};
+    
+    use std::hint::black_box;
 
     use serde::Serialize;
 
@@ -112,16 +114,16 @@ mod tests {
             .build()
             .unwrap();
 
-        let opts = ProverOpts::succinct();
-        let prover = get_prover_server(&opts).unwrap();
+        let opts: ProverOpts = ProverOpts::default();
+        let prover: std::rc::Rc<dyn ProverServer> = get_prover_server(&opts).unwrap();
 
-        let receipt = prover.prove(env, super::MAIN_ELF).unwrap();
+        let receipt: Receipt = prover.prove(env, super::MAIN_ELF).unwrap();
 
-        let succinct_receipt = receipt.inner.succinct().unwrap();
+        let succinct_receipt: &risc0_zkvm::SuccinctReceipt = receipt.inner.succinct().unwrap();
 
-        let receipt = risc0_zkvm::recursion::identity_p254(&succinct_receipt).unwrap();
+        let receipt: risc0_zkvm::SuccinctReceipt = identity_p254(&succinct_receipt).unwrap();
 
-        let seal_bytes = receipt.get_seal_bytes();
+        let seal_bytes: Vec<u8> = receipt.get_seal_bytes();
 
         let seal = black_box(risc0_zkvm::stark_to_snark(&seal_bytes).unwrap());
 
