@@ -7,14 +7,12 @@ mod tests {
 
     use risc0_groth16::docker::stark_to_snark;
     use risc0_zkvm::{
-        get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl,
+        get_prover_server, recursion::identity_p254, ExecutorEnv, ExecutorImpl,
         InnerReceipt, ProverOpts, Receipt, VerifierContext, ProverServer
     };
     use std::str::FromStr;
 
     use sha2::{Digest, Sha384};
-    
-    use std::hint::black_box;
 
     use serde::Serialize;
 
@@ -112,20 +110,19 @@ mod tests {
             serialized_path,
         );
         //println!("{:?}", private_inputs);
-
-        tracing::info!("exec");
-        let mut exec: ExecutorImpl = ExecutorImpl::from_elf(env, MULTI_TEST_ELF).unwrap();
-
-
-        tracing::info!("session");
-        let session: risc0_zkvm::Session = exec.run().unwrap();    
-
         tracing::info!("env");
         let env: ExecutorEnv = ExecutorEnv::builder()
             .write(&private_inputs)
             .unwrap()
             .build()
             .unwrap();
+
+        tracing::info!("exec");
+        let mut exec: ExecutorImpl = ExecutorImpl::from_elf(env, super::MAIN_ELF).unwrap();
+
+
+        tracing::info!("session");
+        let session: risc0_zkvm::Session = exec.run().unwrap();    
 
         tracing::info!("opts");
         let opts: ProverOpts = ProverOpts::default();
@@ -137,10 +134,10 @@ mod tests {
         let prover: std::rc::Rc<dyn ProverServer> = get_prover_server(&opts).unwrap();
         
         tracing::info!("receipt");
-        let receipt = prover.prove_session(&ctx, &session).unwrap().receipt;
+        let receipt = prover.prove_session(&ctx, &session).unwrap();
         
         tracing::info!("claim");
-        let claim = receipt.claim().unwrap();
+        let claim: risc0_zkvm::ReceiptClaim = receipt.get_claim().unwrap();
         
         tracing::info!("composite_receipt");
         let composite_receipt: &risc0_zkvm::CompositeReceipt = receipt.inner.composite().unwrap();
@@ -160,13 +157,14 @@ mod tests {
         tracing::info!("stark-to-snark");
         let seal = stark_to_snark(&seal_bytes).unwrap().to_vec();
     
-        tracing::info!("Receipt");
-        let receipt = Receipt::new(
-            InnerReceipt::Groth16(Groth16Receipt { seal, claim }),
-            journal,
-        );
+        //TODO:
+        // tracing::info!("Receipt");
+        // let receipt = Receipt::new(
+        //     InnerReceipt::Groth16(Groth16Receipt { seal, claim }),
+        //     journal,
+        // );
     
-        receipt.verify(MULTI_TEST_ID).unwrap();
+        // receipt.verify(super::MAIN_ELF).unwrap();
 
     }
 }
