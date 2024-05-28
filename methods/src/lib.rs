@@ -113,31 +113,60 @@ mod tests {
         );
         //println!("{:?}", private_inputs);
 
-        let env = ExecutorEnv::builder()
+        tracing::info!("exec");
+        let mut exec: ExecutorImpl = ExecutorImpl::from_elf(env, MULTI_TEST_ELF).unwrap();
+
+
+        tracing::info!("session");
+        let session: risc0_zkvm::Session = exec.run().unwrap();    
+
+        tracing::info!("env");
+        let env: ExecutorEnv = ExecutorEnv::builder()
             .write(&private_inputs)
             .unwrap()
             .build()
             .unwrap();
 
+        tracing::info!("opts");
         let opts: ProverOpts = ProverOpts::default();
 
-        tracing::info!("get_prover_server");
+        tracing::info!("ctx");
+        let ctx: VerifierContext = VerifierContext::default();
+
+        tracing::info!("prover");
         let prover: std::rc::Rc<dyn ProverServer> = get_prover_server(&opts).unwrap();
-
-        tracing::info!("prover.prove(env, super::MAIN_ELF).unwrap();");
-        let receipt: Receipt = prover.prove(env, super::MAIN_ELF).unwrap();
-
-        tracing::info!("succinct_receipt: &risc0_zkvm::SuccinctReceipt = receipt.inner.succinct().unwrap();");
-        let succinct_receipt: &risc0_zkvm::SuccinctReceipt = receipt.inner.succinct().unwrap();
-
-        tracing::info!("identity_p254");
-        let receipt: risc0_zkvm::SuccinctReceipt = identity_p254(&succinct_receipt).unwrap();
-
-        tracing::info!("get_seal_bytes");
-        let seal_bytes: Vec<u8> = receipt.get_seal_bytes();
-
-        tracing::info!("stark_to_snark");
-        let seal = black_box(risc0_zkvm::stark_to_snark(&seal_bytes).unwrap());
+        
+        tracing::info!("receipt");
+        let receipt = prover.prove_session(&ctx, &session).unwrap().receipt;
+        
+        tracing::info!("claim");
+        let claim = receipt.claim().unwrap();
+        
+        tracing::info!("composite_receipt");
+        let composite_receipt: &risc0_zkvm::CompositeReceipt = receipt.inner.composite().unwrap();
+        
+        tracing::info!("succinct_receipt");
+        let succinct_receipt: risc0_zkvm::SuccinctReceipt = prover.compress(composite_receipt).unwrap();
+        
+        tracing::info!("journal");
+        let journal: Vec<u8> = session.journal.unwrap().bytes;
+    
+        tracing::info!("ident_receipt");
+        let ident_receipt: risc0_zkvm::SuccinctReceipt = identity_p254(&succinct_receipt).unwrap();
+        
+        tracing::info!("seal_bytes");
+        let seal_bytes: Vec<u8> = ident_receipt.get_seal_bytes();
+    
+        tracing::info!("stark-to-snark");
+        let seal = stark_to_snark(&seal_bytes).unwrap().to_vec();
+    
+        tracing::info!("Receipt");
+        let receipt = Receipt::new(
+            InnerReceipt::Groth16(Groth16Receipt { seal, claim }),
+            journal,
+        );
+    
+        receipt.verify(MULTI_TEST_ID).unwrap();
 
     }
 }
