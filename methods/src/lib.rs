@@ -5,11 +5,10 @@ mod tests {
     use alloy_primitives::FixedBytes;
     //use bls_signatures::{PublicKey, PrivateKey, Signature, Serialize};
 
-    //use risc0_zkvm::{default_executor, ExecutorEnv, default_prover};
     use risc0_groth16::docker::stark_to_snark;
     use risc0_zkvm::{
         get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl,
-        InnerReceipt, ProverOpts, Receipt, VerifierContext,
+        InnerReceipt, ProverOpts, Receipt, VerifierContext
     };
     use std::str::FromStr;
 
@@ -66,52 +65,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "prove")]
-    fn stark2snark() {
-        use risc0_groth16::docker::stark_to_snark;
-        use risc0_zkvm::{
-            get_prover_server, recursion::identity_p254, Groth16Receipt, ExecutorEnv, ExecutorImpl,
-            InnerReceipt, ProverOpts, Receipt, VerifierContext,
-        };
-        use risc0_zkvm_methods::{multi_test::MultiTestSpec, MULTI_TEST_ELF, MULTI_TEST_ID};
-
-        let env = ExecutorEnv::builder()
-            .write(&MultiTestSpec::BusyLoop { cycles: 0 })
-            .unwrap()
-            .build()
-            .unwrap();
-
-        tracing::info!("execute");
-
-        let mut exec = ExecutorImpl::from_elf(env, MULTI_TEST_ELF).unwrap();
-        let session = exec.run().unwrap();
-
-        tracing::info!("prove");
-        let opts = ProverOpts::default();
-        let ctx = VerifierContext::default();
-        let prover = get_prover_server(&opts).unwrap();
-        let receipt = prover.prove_session(&ctx, &session).unwrap().receipt;
-        let claim = receipt.claim().unwrap();
-        let composite_receipt = receipt.inner.composite().unwrap();
-        let succinct_receipt = prover.compress(composite_receipt).unwrap();
-        let journal = session.journal.unwrap().bytes;
-
-        tracing::info!("identity_p254");
-        let ident_receipt = identity_p254(&succinct_receipt).unwrap();
-        let seal_bytes = ident_receipt.get_seal_bytes();
-
-        tracing::info!("stark-to-snark");
-        let seal = stark_to_snark(&seal_bytes).unwrap().to_vec();
-
-        tracing::info!("Receipt");
-        let receipt = Receipt::new(
-            InnerReceipt::Groth16(Groth16Receipt { seal, claim }),
-            journal,
-        );
-
-        receipt.verify(MULTI_TEST_ID).unwrap();
-    }
-
     #[test]
     fn test_verify() {
         // Precomputed example inputs
@@ -159,37 +112,18 @@ mod tests {
             .build()
             .unwrap();
 
-        // NOTE: Use the executor to run tests without proving.
-        // let session_info = default_executor().execute(env, super::MAIN_ELF).unwrap();
-        tracing::info!("Executing");
-        let mut exec = ExecutorImpl::from_elf(env, super::MAIN_ELF).unwrap();
-        let session = exec.run().unwrap();
-
-        tracing::info!("prove");
-        let opts = ProverOpts::default();
-        let ctx = VerifierContext::default();
+        let opts = ProverOpts::succinct();
         let prover = get_prover_server(&opts).unwrap();
-        // let receipt = prover.prove_session(&ctx, &session).unwrap().receipt;
-        // available fields are: `inner`, `journal`
-        let receipt: Receipt = prover.prove_session(&ctx, &session).unwrap();
-        let claim = receipt.get_claim().unwrap();
-        let composite_receipt = receipt.inner.composite().unwrap();
-        let succinct_receipt = prover.compress(composite_receipt).unwrap();
-        let journal = session.journal.unwrap().bytes;
 
-        tracing::info!("identity_p254");
-        let ident_receipt = identity_p254(&succinct_receipt).unwrap();
-        let seal_bytes = ident_receipt.get_seal_bytes();
+        let receipt = prover.prove(env, super::MAIN_ELF).unwrap();
 
-        tracing::info!("stark-to-snark");
-        let seal = stark_to_snark(&seal_bytes).unwrap().to_vec();
+        let succinct_receipt = receipt.inner.succinct().unwrap();
 
-        tracing::info!("receipt");
-        let receipt = Receipt::new(
-            InnerReceipt::Compact(CompactReceipt { seal, claim }),
-            journal,
-        );
+        let receipt = risc0_zkvm::recursion::identity_p254(&succinct_receipt).unwrap();
 
-        // receipt.verify(super::MAIN_ELF).unwrap();
+        let seal_bytes = receipt.get_seal_bytes();
+
+        let seal = black_box(risc0_zkvm::stark_to_snark(&seal_bytes).unwrap());
+
     }
 }
