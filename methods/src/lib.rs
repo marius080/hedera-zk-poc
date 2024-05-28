@@ -69,6 +69,11 @@ mod tests {
 
     #[test]
     fn test_verify() {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_target(false)
+            .init();
+
         // Precomputed example inputs
         let leaf_data = b"example leaf data";
         let leaf_hash = Sha384::digest(leaf_data);
@@ -115,16 +120,23 @@ mod tests {
             .unwrap();
 
         let opts: ProverOpts = ProverOpts::default();
+
+        tracing::info!("get_prover_server");
         let prover: std::rc::Rc<dyn ProverServer> = get_prover_server(&opts).unwrap();
 
+        tracing::info!("prover.prove(env, super::MAIN_ELF).unwrap();");
         let receipt: Receipt = prover.prove(env, super::MAIN_ELF).unwrap();
 
+        tracing::info!("succinct_receipt: &risc0_zkvm::SuccinctReceipt = receipt.inner.succinct().unwrap();");
         let succinct_receipt: &risc0_zkvm::SuccinctReceipt = receipt.inner.succinct().unwrap();
 
+        tracing::info!("identity_p254");
         let receipt: risc0_zkvm::SuccinctReceipt = identity_p254(&succinct_receipt).unwrap();
 
+        tracing::info!("get_seal_bytes");
         let seal_bytes: Vec<u8> = receipt.get_seal_bytes();
 
+        tracing::info!("stark_to_snark");
         let seal = black_box(risc0_zkvm::stark_to_snark(&seal_bytes).unwrap());
 
     }
