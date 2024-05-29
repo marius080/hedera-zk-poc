@@ -7,7 +7,7 @@ mod tests {
 
     use risc0_groth16::docker::stark_to_snark;
     use risc0_zkvm::{
-        get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl, InnerReceipt, ProverOpts, ProverServer, Receipt, VerifierContext
+        get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl, InnerReceipt, ProverOpts, ProverServer, Receipt, VerifierContext, default_prover
     };
     use std::str::FromStr;
 
@@ -133,11 +133,13 @@ use std::io::Write;
         let ctx: VerifierContext = VerifierContext::default();
 
         tracing::info!("prover");
-        let prover: std::rc::Rc<dyn ProverServer> = get_prover_server(&opts).unwrap();
-        
+        // let prover: std::rc::Rc<dyn ProverServer> = get_prover_server(&opts).unwrap();
+        let prover = default_prover();
+
         tracing::info!("receipt");
-        let receipt = prover.prove_session(&ctx, &session).unwrap();
-        
+        // let receipt = prover.prove_session(&ctx, &session).unwrap();
+        let receipt = prover.prove(env, PURE_ELF).unwrap();
+
         tracing::info!("claim");
         let claim: risc0_zkvm::ReceiptClaim = receipt.get_claim().unwrap();
         
