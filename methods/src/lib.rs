@@ -7,14 +7,16 @@ mod tests {
 
     use risc0_groth16::docker::stark_to_snark;
     use risc0_zkvm::{
-        get_prover_server, recursion::identity_p254, ExecutorEnv, ExecutorImpl,
-        InnerReceipt, ProverOpts, Receipt, VerifierContext, ProverServer
+        get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl, InnerReceipt, ProverOpts, ProverServer, Receipt, VerifierContext
     };
     use std::str::FromStr;
 
     use sha2::{Digest, Sha384};
 
     use serde::Serialize;
+
+    use std::fs::File;
+use std::io::Write;
 
     // Function to verify a Merkle proof
     fn compute_merkle_root(leaf: FixedBytes<48>, merkle_path: [[u8; 48]; 256]) -> [u8; 48] {
@@ -158,12 +160,22 @@ mod tests {
         let seal = stark_to_snark(&seal_bytes).unwrap().to_vec();
     
         //TODO:
-        // tracing::info!("Receipt");
-        // let receipt = Receipt::new(
-        //     InnerReceipt::Groth16(Groth16Receipt { seal, claim }),
-        //     journal,
-        // );
-    
+        tracing::info!("Receipt");
+        let receipt = Receipt::new(
+            InnerReceipt::Compact(CompactReceipt { seal, claim }),
+            journal,
+        );
+
+        // Serialize the struct to a JSON string
+        let serialized = serde_json::to_string_pretty(&receipt).unwrap();
+
+        // Create or open the file
+        let mut file = File::create("receipt.json").expect("Failed to create file");
+
+        // Write the serialized string to the file
+        file.write_all(serialized.as_bytes()).expect("Failed to write to file");
+
+        
         // receipt.verify(super::MAIN_ELF).unwrap();
 
     }
