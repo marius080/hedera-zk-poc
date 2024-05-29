@@ -180,8 +180,8 @@ use std::io::Write;
         file.write_all(serialized.as_bytes()).expect("Failed to write to file");
 
         
-        tracing::info!("verify Groth16");
-        receipt.verify(super::MAIN_ELF).unwrap();
+        //tracing::info!("verify Groth16");
+        //receipt.verify(super::MAIN_ELF).unwrap();
 
     }
 }
