@@ -166,17 +166,22 @@ use std::io::Write;
             journal,
         );
 
+
+        tracing::info!("serialize");
         // Serialize the struct to a JSON string
         let serialized = serde_json::to_string_pretty(&receipt).unwrap();
 
         // Create or open the file
         let mut file = File::create("receipt.json").expect("Failed to create file");
 
+
+        tracing::info!("write to file");
         // Write the serialized string to the file
         file.write_all(serialized.as_bytes()).expect("Failed to write to file");
 
         
-        // receipt.verify(super::MAIN_ELF).unwrap();
+        tracing::info!("verify Groth16");
+        receipt.verify(super::MAIN_ELF).unwrap();
 
     }
 }
