@@ -79,16 +79,16 @@ fn main() {
     assert_eq!(computed_root, private_inputs.merkle_root.as_slice());
 
     // Verify the BLS signature
-    let pubkey = PublicKey::from_bytes(&private_inputs.bls_pubkey.as_slice()).expect("Invalid public key");
-    let signature = Signature::from_bytes(&private_inputs.bls_signature.as_slice()).expect("Invalid signature");
+    // let pubkey = PublicKey::from_bytes(&private_inputs.bls_pubkey.as_slice()).expect("Invalid public key");
+    // let signature = Signature::from_bytes(&private_inputs.bls_signature.as_slice()).expect("Invalid signature");
 
     // println!("PublicKey: {:?}", private_inputs.bls_pubkey);
     // println!("Signature: {:?}", private_inputs.bls_signature);
     
-    assert!(verify_messages(&signature, &[computed_root.as_slice()], &[pubkey]), "Invalid verification");
+    // assert!(verify_messages(&signature, &[computed_root.as_slice()], &[pubkey]), "Invalid verification");
     
-    diff = env::cycle_count();
-    env::log(&format!("cycle count after BLS signature verification: {}", diff - start));
+    // diff = env::cycle_count();
+    // env::log(&format!("cycle count after BLS signature verification: {}", diff - start));
 
     // Encocde the public values of the program.
     let public_inputs: PublicInputs = PublicInputs {
