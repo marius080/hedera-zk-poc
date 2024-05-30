@@ -22,7 +22,7 @@ fn compute_merkle_root(leaf: &[u8; 48], merkle_path: &[[u8; 48]; 256]) -> [u8; 4
     
     for sibling in merkle_path {
         let mut combined = [0u8; 96];
-        if hash.as_slice() < sibling {
+        if hash.as_slice().cmp(sibling) == std::cmp::Ordering::Less {
             combined[..48].copy_from_slice(&hash);
             combined[48..].copy_from_slice(sibling);
         } else {
@@ -68,7 +68,7 @@ fn main() {
     let pubkey = PublicKey::from_bytes(private_inputs.bls_pubkey.as_slice()).expect("Invalid public key");
     let signature = Signature::from_bytes(private_inputs.bls_signature.as_slice()).expect("Invalid signature");
 
-    assert!(verify_messages(&signature, &[&computed_root], &[&pubkey]), "Invalid verification");
+    assert!(verify_messages(&signature, &[&computed_root], &[pubkey]), "Invalid verification");
 
     let diff = env::cycle_count();
     env::log(&format!("cycle count after BLS signature verification: {}", diff - start));
