@@ -10,13 +10,11 @@ mod tests {
         get_prover_server, recursion::identity_p254, CompactReceipt, ExecutorEnv, ExecutorImpl, InnerReceipt, ProverOpts, ProverServer, Receipt, VerifierContext
     };
     use std::str::FromStr;
-
     use sha2::{Digest, Sha384};
-
     use serde::Serialize;
-
     use std::fs::File;
-use std::io::Write;
+    use std::io::Write;
+    use risc0_zkp::core::{digest::Digest, hash::sha::Sha256};
 
     // Function to verify a Merkle proof
     fn compute_merkle_root(leaf: FixedBytes<48>, merkle_path: [[u8; 48]; 256]) -> [u8; 48] {
@@ -179,7 +177,17 @@ use std::io::Write;
         // Write the serialized string to the file
         file.write_all(serialized.as_bytes()).expect("Failed to write to file");
 
-        
+        tracing::info!("post-state-digest");
+        tracing::info!(receipt.inner.get_claim().unwrap().post.digest::<S256>());
+
+        tracing::info!("journal");
+        let hex_journal: String = receipt.journal.iter().map(|byte| format!("{:02x}", byte)).collect();
+        tracing::info!(hex_journal);
+
+        tracing::info!("seal");
+        let hex_seal: String = receipt.inner.compact().unwrap().seal.iter().map(|byte| format!("{:02x}", byte)).collect();
+        tracing::info!(hex_seal);
+
         //tracing::info!("verify Groth16");
         //receipt.verify(super::MAIN_ELF).unwrap();
 
